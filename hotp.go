@@ -3,9 +3,8 @@ package otp
 import (
 	"crypto"
 	"crypto/hmac"
-	"strconv"
-
-	"github.com/chardon55/otp2go/byteorder"
+	"encoding/base32"
+	"fmt"
 )
 
 const counterLength = 8
@@ -54,18 +53,23 @@ func (hotp *hotpImpl) SetCounter(counter uint64) {
 	hotp.counter = counter
 }
 
-func (hotp *hotpImpl) Generate(digitCount uint8) uint32 {
-	counterHead := make([]byte, counterLength)
-	byteorder.ByteOrder().PutUint64(counterHead, hotp.counter)
+func (hotp *hotpImpl) Generate(digitCount uint8) (result uint32) {
+	counterHead := convCounter(hotp.counter)
 
 	encoder := hmac.New(hotp.algorithm.New, hotp.secret)
 	encoder.Write(counterHead)
 
-	return truncate(encoder.Sum(nil)) % digitPow[digitCount]
+	result = truncate(encoder.Sum(nil))
+
+	if digitCount < 10 {
+		result %= digitPow[digitCount]
+	}
+
+	return
 }
 
 func (hotp *hotpImpl) GenerateString(digitCount uint8) string {
-	return strconv.FormatUint(uint64(hotp.Generate(digitCount)), 10)
+	return fmt.Sprintf(fmt.Sprintf("%%0%dd", digitCount), hotp.Generate(digitCount))
 }
 
 func (hotp *hotpImpl) Generate4() uint32 {
@@ -90,6 +94,15 @@ func (hotp *hotpImpl) Generate8() uint32 {
 
 func (hotp *hotpImpl) GenerateString8() string {
 	return hotp.GenerateString(8)
+}
+
+func NewHOTPBase32(base32Secret string, algorithm crypto.Hash) (HOTP, error) {
+	secret, err := base32.StdEncoding.DecodeString(base32Secret)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewHOTP(secret, algorithm), nil
 }
 
 func NewHOTP(secret []byte, algorithm crypto.Hash) HOTP {

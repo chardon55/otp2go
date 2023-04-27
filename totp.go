@@ -1,6 +1,9 @@
 package otp
 
-import "crypto"
+import (
+	"crypto"
+	"encoding/base32"
+)
 
 // TOTP interface
 type TOTP interface {
@@ -90,15 +93,20 @@ func (totp *totpAdapter) GenerateString8() (string, int) {
 	return totp.GenerateString(8)
 }
 
+func NewTOTPBase32(base32Secret string, algorithm crypto.Hash) (TOTP, error) {
+	secret, err := base32.StdEncoding.DecodeString(base32Secret)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewTOTP(secret, algorithm), nil
+}
+
 func NewTOTP(secret []byte, algorithm crypto.Hash) TOTP {
 	return &totpAdapter{
-		hotp: &hotpImpl{
-			secret:    secret,
-			algorithm: algorithm,
-			counter:   0,
-		},
+		hotp:     NewHOTP(secret, algorithm),
 		interval: 30,
-		counter: 0,
-		delta: 0,
+		counter:  0,
+		delta:    0,
 	}
 }
