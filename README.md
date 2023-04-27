@@ -1,5 +1,8 @@
 # otp2go
 
+![Version](https://img.shields.io/github/v/release/chardon55/otp2go?include_prereleases)
+![License](https://img.shields.io/github/license/chardon55/otp2go)
+
 Free and open-source OTP library for Go with simplicity ~~and stupidity~~
 
 License: BSD-3-Clause
