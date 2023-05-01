@@ -18,7 +18,7 @@ import (
     "crypto"
     _ "crypto/sha1"
 
-    "github.com/chardon55/otp2go"
+    otp "github.com/chardon55/otp2go"
 )
 // ...
 totp, err := otp.NewTOTPBase32("<Your Base32 secret>", crypto.SHA1)
